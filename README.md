@@ -17,10 +17,11 @@ Copy the example environment file and adjust the password:
 cp .env.example .env
 ```
 
-Start the stack:
+Start the stack using prebuilt images:
 
 ```bash
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
 
 Open the frontend:
@@ -67,7 +68,11 @@ Images are published by GitHub Actions:
 - `ghcr.io/realsmurph/eve-price-compare-backend:latest`
 - `ghcr.io/realsmurph/eve-price-compare-frontend:latest`
 
-Use `docker-compose.yml` only when the full repository has been cloned locally and the compose file sits beside the `backend/` and `frontend/` directories.
+Use `docker-compose.local.yml` only when the full repository has been cloned locally and you want to build images from source on that machine:
+
+```bash
+docker compose -f docker-compose.local.yml up -d --build
+```
 
 ## Local Backend Development
 
