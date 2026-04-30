@@ -22,7 +22,7 @@ def main() -> None:
     has_alembic_version = "alembic_version" in table_names
 
     if has_app_tables and not has_alembic_version:
-        command.stamp(config, "head")
+        command.stamp(config, "20260430_0001")
 
 
 if __name__ == "__main__":

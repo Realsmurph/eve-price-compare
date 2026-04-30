@@ -378,6 +378,16 @@ textarea:focus {
     background 140ms ease;
 }
 
+.result-row span {
+  display: grid;
+  gap: 2px;
+}
+
+.result-row small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
 .result-row:hover {
   border-color: var(--border-strong);
 }
@@ -408,6 +418,29 @@ code {
 
 .search-tools {
   margin: 12px 0 0;
+}
+
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.category-chips button {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+.category-chips button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 800;
 }
 
 .search-tools .check-row,

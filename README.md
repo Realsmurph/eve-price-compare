@@ -39,9 +39,41 @@ http://localhost:8005/health
 The frontend proxies API calls through nginx, so browser calls use the same origin:
 
 - `/api/items/search?q=tri`
+- `/api/items/search?q=rifter&category=Ship`
 - `/api/items/compare?type_id=34`
+- `/api/items/34/history`
 - `/api/reactions/16659`
 - `/watchlist`
+
+## Static Data And Price History
+
+On startup, the backend loads static item data. By default it downloads Fuzzwork SDE CSV files from:
+
+```text
+https://www.fuzzwork.co.uk/dump/latest
+```
+
+It imports published market items, group/category metadata, item volume, and activity `11` reaction recipes. If Fuzzwork is unavailable, the app still boots with the bundled mock seed data.
+
+Refresh static data manually inside the backend container:
+
+```bash
+docker compose exec backend python -m backend.commands.refresh_static_data --force
+```
+
+Market compares store Jita, Amarr, and C-J snapshots in `market_price_history`. You can also run a batch refresh:
+
+```bash
+docker compose exec backend python -m backend.commands.refresh_price_history --limit 250
+```
+
+For ESI daily market history, use:
+
+```bash
+docker compose exec backend python -m backend.commands.refresh_price_history --daily --limit 250
+```
+
+Use `--all-items` with a sensible `--limit` when you want to walk the full marketable catalog. ESI rate limits still apply, so schedule large refreshes gradually.
 
 ## OpenMediaVault Compose Plugin
 

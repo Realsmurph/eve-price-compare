@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, Integer, Numeric, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Integer, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .database import Base
@@ -34,7 +34,11 @@ class EveType(Base):
     type_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     group_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
+    group_name: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
+    category_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
+    category_name: Mapped[str | None] = mapped_column(String(255), index=True, nullable=True)
     market_group_id: Mapped[int | None] = mapped_column(Integer, index=True, nullable=True)
+    volume: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
     published: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
 
@@ -65,3 +69,23 @@ class MarketPrice(Base):
     type_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     buy: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
     sell: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+
+
+class MarketPriceHistory(Base):
+    __tablename__ = "market_price_history"
+    __table_args__ = (
+        UniqueConstraint("type_id", "hub", "observed_at", name="uq_market_price_history_snapshot"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    type_id: Mapped[int] = mapped_column(Integer, index=True, nullable=False)
+    hub: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
+    buy: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    sell: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    source: Mapped[str] = mapped_column(String(64), nullable=False)
+    history_date: Mapped[date | None] = mapped_column(Date, index=True, nullable=True)
+    observed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
+    )

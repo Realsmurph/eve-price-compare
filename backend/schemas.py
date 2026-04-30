@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
@@ -51,8 +51,33 @@ class EveTypeRead(BaseModel):
     type_id: int
     name: str
     group_id: int | None = None
+    group_name: str | None = None
+    category_id: int | None = None
+    category_name: str | None = None
     market_group_id: int | None = None
+    volume: Decimal | None = None
     published: bool
+
+    @field_serializer("volume", when_used="json")
+    def serialize_volume(self, value: Decimal | None) -> float | None:
+        return float(value) if value is not None else None
+
+
+class MarketPriceHistoryRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    type_id: int
+    hub: str
+    buy: Decimal | None = None
+    sell: Decimal | None = None
+    source: str
+    history_date: date | None = None
+    observed_at: datetime
+
+    @field_serializer("buy", "sell", when_used="json")
+    def serialize_price(self, value: Decimal | None) -> float | None:
+        return float(value) if value is not None else None
 
 
 class ReactionLineItem(BaseModel):

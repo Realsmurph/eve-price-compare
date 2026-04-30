@@ -21,3 +21,10 @@ RUN_STATIC_DATA_LOADER = os.getenv("RUN_STATIC_DATA_LOADER", "true").lower() in 
     "true",
     "yes",
 }
+SDE_BASE_URL = os.getenv("SDE_BASE_URL", "https://www.fuzzwork.co.uk/dump/latest")
+SDE_CACHE_DIR = os.getenv("SDE_CACHE_DIR", "/tmp/eve-price-compare-sde")
+GOONMETRICS_BASE_URL = os.getenv(
+    "GOONMETRICS_BASE_URL",
+    "https://goonmetrics.apps.goonswarm.org",
+)
+GOONMETRICS_CJ_STRUCTURE_ID = os.getenv("GOONMETRICS_CJ_STRUCTURE_ID", "1049588174021")

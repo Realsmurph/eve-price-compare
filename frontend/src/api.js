@@ -30,12 +30,28 @@ export function searchItems(query, options = {}) {
     market_only: String(options.marketOnly ?? true),
     published: String(options.published ?? true),
   });
+  if (options.category) {
+    params.set("category", options.category);
+  }
+  if (options.group) {
+    params.set("group", options.group);
+  }
   return request(`/api/items/search?${params.toString()}`);
 }
 
 export function compareItem(typeId) {
   const params = new URLSearchParams({ type_id: String(typeId) });
   return request(`/api/items/compare?${params.toString()}`);
+}
+
+export function getItemHistory(typeId, options = {}) {
+  const params = new URLSearchParams({
+    limit: String(options.limit ?? 90),
+  });
+  if (options.hub) {
+    params.set("hub", options.hub);
+  }
+  return request(`/api/items/${typeId}/history?${params.toString()}`);
 }
 
 export function listWatchlist() {

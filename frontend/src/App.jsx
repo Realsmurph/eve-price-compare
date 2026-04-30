@@ -4,6 +4,7 @@ import {
   compareItem,
   createWatchlistItem,
   deleteWatchlistItem,
+  getItemHistory,
   listWatchlist,
   searchItems,
   updateWatchlistItem,
@@ -18,6 +19,15 @@ const THEMES = [
   { id: "light", label: "Light" },
   { id: "dark", label: "Dark" },
   { id: "capsule", label: "Capsule" },
+];
+
+const CATEGORY_FILTERS = [
+  { label: "All", value: "" },
+  { label: "Ships", value: "Ship" },
+  { label: "Blueprints", value: "Blueprint" },
+  { label: "Modules", value: "Module" },
+  { label: "Materials", value: "Material" },
+  { label: "Charges", value: "Charge" },
 ];
 
 function formatIsk(value) {
@@ -36,6 +46,7 @@ function App() {
   const [results, setResults] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [comparison, setComparison] = useState(null);
+  const [history, setHistory] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
   const [watchForm, setWatchForm] = useState(EMPTY_WATCH_FORM);
   const [editingId, setEditingId] = useState(null);
@@ -46,6 +57,7 @@ function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [searchSort, setSearchSort] = useState("name");
   const [marketOnly, setMarketOnly] = useState(true);
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [watchFilter, setWatchFilter] = useState("");
   const [watchSort, setWatchSort] = useState("name");
 
@@ -125,6 +137,8 @@ function App() {
         const matches = await searchItems(trimmed, {
           sort: searchSort,
           marketOnly,
+          category: categoryFilter || undefined,
+          limit: 18,
         });
         setResults(matches);
       } catch (err) {
@@ -135,7 +149,7 @@ function App() {
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
-  }, [marketOnly, query, searchSort]);
+  }, [categoryFilter, marketOnly, query, searchSort]);
 
   async function refreshWatchlist() {
     try {
@@ -151,6 +165,7 @@ function App() {
     setQuery(item.name);
     setResults([]);
     setComparison(null);
+    setHistory([]);
     setStatus("");
     setError("");
   }
@@ -159,6 +174,7 @@ function App() {
     setQuery(event.target.value);
     setSelectedItem(null);
     setComparison(null);
+    setHistory([]);
     setStatus("");
   }
 
@@ -174,6 +190,7 @@ function App() {
     try {
       const data = await compareItem(selectedItem.type_id);
       setComparison(data);
+      setHistory(await getItemHistory(selectedItem.type_id, { limit: 18 }));
       setStatus(`Compared ${selectedItem.name}`);
     } catch (err) {
       setError(err.message);
@@ -345,6 +362,19 @@ function App() {
               </label>
             </div>
 
+            <div className="category-chips" aria-label="Category filters">
+              {CATEGORY_FILTERS.map((item) => (
+                <button
+                  className={categoryFilter === item.value ? "active" : ""}
+                  key={item.value || "all"}
+                  type="button"
+                  onClick={() => setCategoryFilter(item.value)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
             <div className="search-results">
               {isSearching && <p className="muted">Searching...</p>}
               {!isSearching && !selectedItem && query.trim().length >= 2 && results.length === 0 && (
@@ -358,7 +388,10 @@ function App() {
                     type="button"
                     onClick={() => selectItem(item)}
                   >
-                    <span>{item.name}</span>
+                    <span>
+                      {item.name}
+                      <small>{[item.category_name, item.group_name].filter(Boolean).join(" / ")}</small>
+                    </span>
                     <code>{item.type_id}</code>
                   </button>
                 ))}
@@ -366,6 +399,7 @@ function App() {
           </section>
 
           <MarketTable comparison={comparison} />
+          <HistoryPanel history={history} />
         </div>
 
         <aside className="watchlist-panel" aria-labelledby="watchlist-heading">
@@ -577,6 +611,56 @@ function MarketTable({ comparison }) {
                 <td>{formatIsk(row.spread)}</td>
               </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function HistoryPanel({ history }) {
+  const rows = useMemo(() => {
+    return [...history].sort((first, second) => {
+      const firstTime = new Date(first.history_date ?? first.observed_at).getTime();
+      const secondTime = new Date(second.history_date ?? second.observed_at).getTime();
+      return secondTime - firstTime;
+    });
+  }, [history]);
+
+  return (
+    <section className="panel table-panel" aria-labelledby="history-heading">
+      <div className="panel-header">
+        <div>
+          <h2 id="history-heading">Price History</h2>
+          <p>{rows.length ? "Latest stored snapshots" : "Compare an item to start collecting trends"}</p>
+        </div>
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Hub</th>
+              <th>Buy</th>
+              <th>Sell</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td>{row.history_date ?? new Date(row.observed_at).toLocaleString()}</td>
+                <td>{row.hub.toUpperCase()}</td>
+                <td>{formatIsk(row.buy)}</td>
+                <td>{formatIsk(row.sell)}</td>
+                <td>{row.source}</td>
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan="5">No history stored for this item yet.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
