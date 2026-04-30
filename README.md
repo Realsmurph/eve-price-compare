@@ -89,6 +89,15 @@ If you paste only a compose file into OMV, use `docker-compose.omv.yml`. It pull
 If ports `5173` or `8005` are already taken on the OMV host, change `FRONTEND_PORT` or `BACKEND_PORT`.
 The frontend container proxies API requests internally, so the backend does not need to be exposed publicly unless you want direct API access.
 
+For SSD-backed persistent storage on OMV, set these environment values:
+
+```env
+POSTGRES_DATA_PATH=/srv/dev-disk-by-uuid-1aa84a7d-0f3e-4113-8059-c95bed6728fa/EvePriceCompare/postgres_data
+SDE_CACHE_PATH=/srv/dev-disk-by-uuid-1aa84a7d-0f3e-4113-8059-c95bed6728fa/EvePriceCompare/sde_cache
+```
+
+`POSTGRES_DATA_PATH` stores the database, watchlist, imported SDE rows, and price history. `SDE_CACHE_PATH` stores downloaded Fuzzwork CSVs so recreating containers does not re-download static data.
+
 To update after a new GitHub commit, pull the latest images and recreate the containers from OMV, or run:
 
 ```bash

@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ${POSTGRES_DATA_PATH:-postgres_data}:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
@@ -29,6 +29,9 @@ services:
       GOONMETRICS_STUB_BUY: ${GOONMETRICS_STUB_BUY:-}
       GOONMETRICS_STUB_SELL: ${GOONMETRICS_STUB_SELL:-}
       RUN_STATIC_DATA_LOADER: ${RUN_STATIC_DATA_LOADER:-true}
+      SDE_CACHE_DIR: /tmp/eve-price-compare-sde
+    volumes:
+      - ${SDE_CACHE_PATH:-sde_cache}:/tmp/eve-price-compare-sde
     ports:
       - "${BACKEND_PORT:-8005}:8000"
     depends_on:
@@ -56,3 +59,4 @@ services:
 
 volumes:
   postgres_data:
+  sde_cache:
