@@ -22,6 +22,7 @@ services:
     image: eve-price-compare-backend:local
     container_name: eve-price-compare-backend
     restart: unless-stopped
+    user: "${MYPUID:-1000}:${MYPGID:-1000}"
     environment:
       APP_ENV: ${APP_ENV:-development}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
@@ -30,6 +31,7 @@ services:
       GOONMETRICS_STUB_SELL: ${GOONMETRICS_STUB_SELL:-}
       RUN_STATIC_DATA_LOADER: ${RUN_STATIC_DATA_LOADER:-true}
       SDE_CACHE_DIR: /app/data/sde-cache
+      TZ: ${MYTZ:-America/New_York}
     volumes:
       - ${SDE_CACHE_PATH:-sde_cache}:/app/data/sde-cache
     ports:
