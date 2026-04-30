@@ -49,6 +49,7 @@ function App() {
   const [comparison, setComparison] = useState(null);
   const [history, setHistory] = useState([]);
   const [reaction, setReaction] = useState(null);
+  const [shippingOrigin, setShippingOrigin] = useState("jita");
   const [watchlist, setWatchlist] = useState([]);
   const [watchForm, setWatchForm] = useState(EMPTY_WATCH_FORM);
   const [editingId, setEditingId] = useState(null);
@@ -153,6 +154,16 @@ function App() {
     return () => window.clearTimeout(timeoutId);
   }, [categoryFilter, marketOnly, query, searchSort]);
 
+  useEffect(() => {
+    if (!selectedItem || !comparison) {
+      return;
+    }
+
+    getReactionProfit(selectedItem.type_id, { shippingOrigin })
+      .then(setReaction)
+      .catch(() => setReaction(null));
+  }, [comparison, selectedItem, shippingOrigin]);
+
   async function refreshWatchlist() {
     try {
       const items = await listWatchlist();
@@ -196,7 +207,7 @@ function App() {
       setComparison(data);
       setHistory(await getItemHistory(selectedItem.type_id, { limit: 18 }));
       try {
-        setReaction(await getReactionProfit(selectedItem.type_id));
+        setReaction(await getReactionProfit(selectedItem.type_id, { shippingOrigin }));
       } catch {
         setReaction(null);
       }
@@ -408,7 +419,11 @@ function App() {
           </section>
 
           <MarketTable comparison={comparison} />
-          <ReactionPanel reaction={reaction} />
+          <ReactionPanel
+            reaction={reaction}
+            shippingOrigin={shippingOrigin}
+            onShippingOriginChange={setShippingOrigin}
+          />
           <HistoryPanel history={history} />
         </div>
 
@@ -628,7 +643,7 @@ function MarketTable({ comparison }) {
   );
 }
 
-function ReactionPanel({ reaction }) {
+function ReactionPanel({ reaction, shippingOrigin, onShippingOriginChange }) {
   if (!reaction) {
     return null;
   }
@@ -640,6 +655,16 @@ function ReactionPanel({ reaction }) {
           <h2 id="reaction-heading">Reaction Profit</h2>
           <p>{reaction.shipping_route} via {reaction.shipping_provider}</p>
         </div>
+        <label className="compact-select">
+          <span>Origin</span>
+          <select
+            value={shippingOrigin}
+            onChange={(event) => onShippingOriginChange(event.target.value)}
+          >
+            <option value="jita">Jita</option>
+            <option value="amarr">Amarr</option>
+          </select>
+        </label>
       </div>
       <div className="metric-grid">
         <div>
@@ -663,8 +688,10 @@ function ReactionPanel({ reaction }) {
           <strong>{formatIsk(reaction.isk_per_hour_after_import)}</strong>
         </div>
         <div>
-          <span>Freight rate</span>
-          <strong>{formatIsk(reaction.shipping_rate_per_m3)} ISK/m3</strong>
+          <span>Rate / full load</span>
+          <strong>
+            {formatIsk(reaction.shipping_rate_per_m3)} / {formatIsk(reaction.shipping_jf_load_fee)}
+          </strong>
         </div>
       </div>
     </section>

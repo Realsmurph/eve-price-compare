@@ -24,8 +24,9 @@ def get_reaction_profit(
     type_id: int,
     import_rate: Decimal = Query(default=Decimal("0"), ge=0),
     import_flat_fee: Decimal = Query(default=Decimal("0"), ge=0),
+    shipping_origin: str | None = Query(default=None, pattern="^(jita|amarr|Jita|Amarr)$"),
     shipping_rate_per_m3: Decimal | None = Query(default=None, ge=0),
-    shipping_min_fee: Decimal | None = Query(default=None, ge=0),
+    shipping_jf_load_fee: Decimal | None = Query(default=None, ge=0),
     service: ReactionService = Depends(get_reaction_service),
 ):
     try:
@@ -33,8 +34,9 @@ def get_reaction_profit(
             type_id,
             import_rate=import_rate,
             import_flat_fee=import_flat_fee,
+            shipping_origin=shipping_origin,
             shipping_rate_per_m3=shipping_rate_per_m3,
-            shipping_min_fee=shipping_min_fee,
+            shipping_jf_load_fee=shipping_jf_load_fee,
         )
     except ReactionNotFoundError as exc:
         raise HTTPException(

@@ -54,8 +54,13 @@ export function getItemHistory(typeId, options = {}) {
   return request(`/api/items/${typeId}/history?${params.toString()}`);
 }
 
-export function getReactionProfit(typeId) {
-  return request(`/api/reactions/${typeId}`);
+export function getReactionProfit(typeId, options = {}) {
+  const params = new URLSearchParams();
+  if (options.shippingOrigin) {
+    params.set("shipping_origin", options.shippingOrigin);
+  }
+  const suffix = params.toString() ? `?${params.toString()}` : "";
+  return request(`/api/reactions/${typeId}${suffix}`);
 }
 
 export function listWatchlist() {

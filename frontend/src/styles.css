@@ -252,6 +252,10 @@ h2 {
   white-space: nowrap;
 }
 
+.compact-select {
+  min-width: 160px;
+}
+
 .workspace {
   display: grid;
   gap: 18px;
@@ -340,6 +344,7 @@ h2 {
 
 .search-box,
 .search-tools label,
+.compact-select,
 .table-tools label,
 .watch-tools label,
 .watch-form label {
@@ -349,6 +354,7 @@ h2 {
 
 .search-box span,
 .search-tools span,
+.compact-select span,
 .table-tools span,
 .watch-tools span,
 .watch-form span {

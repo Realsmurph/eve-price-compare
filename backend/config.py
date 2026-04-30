@@ -33,6 +33,11 @@ ITL_SHIPPING_PROVIDER = os.getenv(
     "ITL_SHIPPING_PROVIDER",
     "Imperial Transcontinental Logistics",
 )
-ITL_SHIPPING_ROUTE = os.getenv("ITL_SHIPPING_ROUTE", "Jita 4-4 -> C-J6MT")
-ITL_SHIPPING_RATE_PER_M3 = Decimal(os.getenv("ITL_SHIPPING_RATE_PER_M3", "800"))
-ITL_SHIPPING_MIN_FEE = Decimal(os.getenv("ITL_SHIPPING_MIN_FEE", "0"))
+ITL_SHIPPING_DEFAULT_ORIGIN = os.getenv("ITL_SHIPPING_DEFAULT_ORIGIN", "jita").lower()
+ITL_JF_LOAD_VOLUME_M3 = Decimal(os.getenv("ITL_JF_LOAD_VOLUME_M3", "350000"))
+ITL_JITA_ROUTE = os.getenv("ITL_JITA_ROUTE", "Jita 4-4 -> C-J6MT")
+ITL_JITA_RATE_PER_M3 = Decimal(os.getenv("ITL_JITA_RATE_PER_M3", "1150"))
+ITL_JITA_JF_LOAD_FEE = Decimal(os.getenv("ITL_JITA_JF_LOAD_FEE", "400000000"))
+ITL_AMARR_ROUTE = os.getenv("ITL_AMARR_ROUTE", "Amarr -> C-J6MT")
+ITL_AMARR_RATE_PER_M3 = Decimal(os.getenv("ITL_AMARR_RATE_PER_M3", "850"))
+ITL_AMARR_JF_LOAD_FEE = Decimal(os.getenv("ITL_AMARR_JF_LOAD_FEE", "290000000"))

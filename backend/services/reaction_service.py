@@ -4,10 +4,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..config import (
-    ITL_SHIPPING_MIN_FEE,
+    ITL_AMARR_JF_LOAD_FEE,
+    ITL_AMARR_RATE_PER_M3,
+    ITL_AMARR_ROUTE,
+    ITL_JF_LOAD_VOLUME_M3,
+    ITL_JITA_JF_LOAD_FEE,
+    ITL_JITA_RATE_PER_M3,
+    ITL_JITA_ROUTE,
+    ITL_SHIPPING_DEFAULT_ORIGIN,
     ITL_SHIPPING_PROVIDER,
-    ITL_SHIPPING_RATE_PER_M3,
-    ITL_SHIPPING_ROUTE,
 )
 from ..models import EveType, MarketPrice, ReactionInput, ReactionRecipe
 from ..schemas import ReactionLineItem, ReactionProfitRead
@@ -33,8 +38,9 @@ class ReactionService:
         type_id: int,
         import_rate: Decimal = Decimal("0"),
         import_flat_fee: Decimal = Decimal("0"),
+        shipping_origin: str | None = None,
         shipping_rate_per_m3: Decimal | None = None,
-        shipping_min_fee: Decimal | None = None,
+        shipping_jf_load_fee: Decimal | None = None,
     ) -> ReactionProfitRead:
         recipe = self._get_recipe(type_id)
         if recipe is None:
@@ -46,16 +52,18 @@ class ReactionService:
                 f"No activity 11 inputs found for reaction type_id {recipe.reaction_type_id}"
             )
 
-        rate_per_m3 = shipping_rate_per_m3 if shipping_rate_per_m3 is not None else ITL_SHIPPING_RATE_PER_M3
-        minimum_shipping_fee = shipping_min_fee if shipping_min_fee is not None else ITL_SHIPPING_MIN_FEE
-        input_lines = [self._build_input_line(item, rate_per_m3) for item in inputs]
+        shipping_terms = _shipping_terms(
+            shipping_origin or ITL_SHIPPING_DEFAULT_ORIGIN,
+            shipping_rate_per_m3=shipping_rate_per_m3,
+            shipping_jf_load_fee=shipping_jf_load_fee,
+        )
+        input_lines = [self._build_input_line(item) for item in inputs]
         input_cost = sum((line.total for line in input_lines), Decimal("0"))
         input_volume_m3 = sum(
             (line.total_volume_m3 or Decimal("0") for line in input_lines),
             Decimal("0"),
         )
-        raw_shipping_cost = sum((line.shipping_cost for line in input_lines), Decimal("0"))
-        shipping_cost = max(raw_shipping_cost, minimum_shipping_fee) if raw_shipping_cost > 0 else Decimal("0")
+        shipping_cost = _calculate_shipping_cost(input_volume_m3, shipping_terms)
 
         output_price = self._get_output_price(recipe.output_type_id)
         output_value = output_price * Decimal(recipe.output_quantity)
@@ -81,8 +89,11 @@ class ReactionService:
             input_cost=input_cost,
             input_volume_m3=input_volume_m3,
             shipping_provider=ITL_SHIPPING_PROVIDER,
-            shipping_route=ITL_SHIPPING_ROUTE,
-            shipping_rate_per_m3=rate_per_m3,
+            shipping_route=shipping_terms.route,
+            shipping_origin=shipping_terms.origin,
+            shipping_rate_per_m3=shipping_terms.rate_per_m3,
+            shipping_jf_load_volume_m3=ITL_JF_LOAD_VOLUME_M3,
+            shipping_jf_load_fee=shipping_terms.jf_load_fee,
             shipping_cost=shipping_cost,
             import_cost=import_cost,
             total_cost=total_cost,
@@ -116,17 +127,12 @@ class ReactionService:
         )
         return list(self.db.scalars(statement))
 
-    def _build_input_line(self, item: ReactionInput, shipping_rate_per_m3: Decimal) -> ReactionLineItem:
+    def _build_input_line(self, item: ReactionInput) -> ReactionLineItem:
         unit_price = self._get_input_price(item.input_type_id)
         eve_type = self.db.get(EveType, item.input_type_id)
         quantity = item.quantity
         unit_volume = Decimal(eve_type.volume) if eve_type and eve_type.volume is not None else None
         total_volume = unit_volume * Decimal(quantity) if unit_volume is not None else None
-        shipping_cost = (
-            total_volume * shipping_rate_per_m3
-            if total_volume is not None
-            else Decimal("0")
-        )
 
         return ReactionLineItem(
             type_id=item.input_type_id,
@@ -136,7 +142,6 @@ class ReactionService:
             total=unit_price * Decimal(quantity),
             unit_volume_m3=unit_volume,
             total_volume_m3=total_volume,
-            shipping_cost=shipping_cost,
         )
 
     def _get_input_price(self, type_id: int) -> Decimal:
@@ -150,3 +155,53 @@ class ReactionService:
         if price is None or price.buy is None:
             raise MissingPriceError(f"Missing buy price for output type_id {type_id}")
         return Decimal(price.buy)
+
+
+class ShippingTerms:
+    def __init__(
+        self,
+        origin: str,
+        route: str,
+        rate_per_m3: Decimal,
+        jf_load_fee: Decimal,
+    ) -> None:
+        self.origin = origin
+        self.route = route
+        self.rate_per_m3 = rate_per_m3
+        self.jf_load_fee = jf_load_fee
+
+
+def _shipping_terms(
+    origin: str,
+    shipping_rate_per_m3: Decimal | None = None,
+    shipping_jf_load_fee: Decimal | None = None,
+) -> ShippingTerms:
+    normalized_origin = origin.strip().lower()
+    if normalized_origin == "amarr":
+        return ShippingTerms(
+            origin="amarr",
+            route=ITL_AMARR_ROUTE,
+            rate_per_m3=shipping_rate_per_m3 or ITL_AMARR_RATE_PER_M3,
+            jf_load_fee=shipping_jf_load_fee or ITL_AMARR_JF_LOAD_FEE,
+        )
+
+    return ShippingTerms(
+        origin="jita",
+        route=ITL_JITA_ROUTE,
+        rate_per_m3=shipping_rate_per_m3 or ITL_JITA_RATE_PER_M3,
+        jf_load_fee=shipping_jf_load_fee or ITL_JITA_JF_LOAD_FEE,
+    )
+
+
+def _calculate_shipping_cost(volume_m3: Decimal, terms: ShippingTerms) -> Decimal:
+    if volume_m3 <= 0:
+        return Decimal("0")
+
+    full_loads = int(volume_m3 // ITL_JF_LOAD_VOLUME_M3)
+    remainder = volume_m3 % ITL_JF_LOAD_VOLUME_M3
+    full_load_cost = Decimal(full_loads) * terms.jf_load_fee
+    if remainder == 0:
+        return full_load_cost
+
+    remainder_cost = min(remainder * terms.rate_per_m3, terms.jf_load_fee)
+    return full_load_cost + remainder_cost

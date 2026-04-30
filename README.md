@@ -45,19 +45,25 @@ The frontend proxies API calls through nginx, so browser calls use the same orig
 - `/api/reactions/16659`
 - `/watchlist`
 
-Reaction profit includes configurable C-J import freight. The default assumes Imperial Transcontinental Logistics shipping to C-J at `800 ISK/m3`, using each input type's SDE volume:
+Reaction profit includes configurable C-J import freight using each input type's SDE volume. The default ITL terms are:
 
 ```env
 ITL_SHIPPING_PROVIDER=Imperial Transcontinental Logistics
-ITL_SHIPPING_ROUTE=Jita 4-4 -> C-J6MT
-ITL_SHIPPING_RATE_PER_M3=800
-ITL_SHIPPING_MIN_FEE=0
+ITL_SHIPPING_DEFAULT_ORIGIN=jita
+ITL_JF_LOAD_VOLUME_M3=350000
+ITL_JITA_ROUTE=Jita 4-4 -> C-J6MT
+ITL_JITA_RATE_PER_M3=1150
+ITL_JITA_JF_LOAD_FEE=400000000
+ITL_AMARR_ROUTE=Amarr -> C-J6MT
+ITL_AMARR_RATE_PER_M3=850
+ITL_AMARR_JF_LOAD_FEE=290000000
 ```
 
 You can override a reaction request without changing env:
 
 ```text
-/api/reactions/16659?shipping_rate_per_m3=750
+/api/reactions/16659?shipping_origin=amarr
+/api/reactions/16659?shipping_origin=jita&shipping_rate_per_m3=1150&shipping_jf_load_fee=400000000
 ```
 
 ## Static Data And Price History
