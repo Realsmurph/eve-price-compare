@@ -44,7 +44,7 @@ The frontend proxies API calls through nginx, so browser calls use the same orig
 
 ## OpenMediaVault Compose Plugin
 
-If you paste only a compose file into OMV, use `docker-compose.omv.yml`. It builds directly from GitHub and does not require `backend/` and `frontend/` folders beside the compose file.
+If you paste only a compose file into OMV, use `docker-compose.omv.yml`. It pulls prebuilt images from GitHub Container Registry and does not require OMV to build the app locally.
 
 1. Create a new Compose file in the OMV Compose plugin.
 2. Paste `docker-compose.omv.yml`.
@@ -54,6 +54,18 @@ If you paste only a compose file into OMV, use `docker-compose.omv.yml`. It buil
 6. Visit `http://<omv-host>:5173`.
 
 If ports `5173` or `8000` are already taken on the OMV host, change `FRONTEND_PORT` or `BACKEND_PORT`.
+
+To update after a new GitHub commit, pull the latest images and recreate the containers from OMV, or run:
+
+```bash
+docker compose -f docker-compose.omv.yml pull
+docker compose -f docker-compose.omv.yml up -d
+```
+
+Images are published by GitHub Actions:
+
+- `ghcr.io/realsmurph/eve-price-compare-backend:latest`
+- `ghcr.io/realsmurph/eve-price-compare-frontend:latest`
 
 Use `docker-compose.yml` only when the full repository has been cloned locally and the compose file sits beside the `backend/` and `frontend/` directories.
 
