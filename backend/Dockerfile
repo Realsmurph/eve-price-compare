@@ -17,7 +17,8 @@ COPY backend /app/backend
 COPY alembic.ini /app/alembic.ini
 COPY migrations /app/migrations
 
-RUN chmod +x /app/backend/entrypoint.sh \
+RUN mkdir -p /app/data/sde-cache \
+    && chmod +x /app/backend/entrypoint.sh \
     && chown -R appuser:appuser /app
 
 USER appuser

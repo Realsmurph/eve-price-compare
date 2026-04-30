@@ -96,7 +96,14 @@ POSTGRES_DATA_PATH=/srv/dev-disk-by-uuid-1aa84a7d-0f3e-4113-8059-c95bed6728fa/Ev
 SDE_CACHE_PATH=/srv/dev-disk-by-uuid-1aa84a7d-0f3e-4113-8059-c95bed6728fa/EvePriceCompare/sde_cache
 ```
 
-`POSTGRES_DATA_PATH` stores the database, watchlist, imported SDE rows, and price history. `SDE_CACHE_PATH` stores downloaded Fuzzwork CSVs so recreating containers does not re-download static data.
+`POSTGRES_DATA_PATH` stores the database, watchlist, imported SDE rows, and price history. `SDE_CACHE_PATH` stores downloaded Fuzzwork CSVs so recreating containers does not re-download static data. The backend container writes the SDE cache as UID/GID `1000:1000`, so the host cache directory must be writable by that user.
+
+On OMV, create and grant the SDE cache directory before first deploy:
+
+```bash
+mkdir -p /srv/dev-disk-by-uuid-1aa84a7d-0f3e-4113-8059-c95bed6728fa/EvePriceCompare/sde_cache
+chown -R 1000:1000 /srv/dev-disk-by-uuid-1aa84a7d-0f3e-4113-8059-c95bed6728fa/EvePriceCompare/sde_cache
+```
 
 To update after a new GitHub commit, pull the latest images and recreate the containers from OMV, or run:
 

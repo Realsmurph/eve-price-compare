@@ -29,9 +29,9 @@ services:
       GOONMETRICS_STUB_BUY: ${GOONMETRICS_STUB_BUY:-}
       GOONMETRICS_STUB_SELL: ${GOONMETRICS_STUB_SELL:-}
       RUN_STATIC_DATA_LOADER: ${RUN_STATIC_DATA_LOADER:-true}
-      SDE_CACHE_DIR: /tmp/eve-price-compare-sde
+      SDE_CACHE_DIR: /app/data/sde-cache
     volumes:
-      - ${SDE_CACHE_PATH:-sde_cache}:/tmp/eve-price-compare-sde
+      - ${SDE_CACHE_PATH:-sde_cache}:/app/data/sde-cache
     ports:
       - "${BACKEND_PORT:-8005}:8000"
     depends_on:

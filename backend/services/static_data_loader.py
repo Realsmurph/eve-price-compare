@@ -461,7 +461,7 @@ class StaticDataLoader:
                 with path.open("wb") as handle:
                     for chunk in response.iter_bytes():
                         handle.write(chunk)
-        except httpx.HTTPError:
+        except (OSError, httpx.HTTPError):
             if path.exists():
                 path.unlink()
             return None
