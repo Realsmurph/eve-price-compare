@@ -12,6 +12,9 @@ from ..database import SessionLocal
 from ..models import EveType, MarketPrice, ReactionInput, ReactionRecipe
 
 
+UPSERT_BATCH_SIZE = 1000
+
+
 MOCK_EVE_TYPES = [
     {
         "type_id": 34,
@@ -465,15 +468,22 @@ class StaticDataLoader:
         return path
 
     def _upsert_eve_types(self, db, rows: list[dict]) -> None:
-        if not rows:
-            return
-        statement = insert(EveType).values(rows)
-        update_columns = {
-            column.name: getattr(statement.excluded, column.name)
-            for column in EveType.__table__.columns
-            if column.name != "type_id"
-        }
-        db.execute(statement.on_conflict_do_update(index_elements=["type_id"], set_=update_columns))
+        for batch_start in range(0, len(rows), UPSERT_BATCH_SIZE):
+            batch = rows[batch_start : batch_start + UPSERT_BATCH_SIZE]
+            if not batch:
+                continue
+            statement = insert(EveType).values(batch)
+            update_columns = {
+                column.name: getattr(statement.excluded, column.name)
+                for column in EveType.__table__.columns
+                if column.name != "type_id"
+            }
+            db.execute(
+                statement.on_conflict_do_update(
+                    index_elements=["type_id"],
+                    set_=update_columns,
+                )
+            )
 
     def _load_groups(self, path: Path | None) -> dict[int, dict]:
         if path is None:
