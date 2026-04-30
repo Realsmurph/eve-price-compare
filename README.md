@@ -33,7 +33,7 @@ http://localhost:5173
 Backend healthcheck:
 
 ```text
-http://localhost:8000/health
+http://localhost:8005/health
 ```
 
 The frontend proxies API calls through nginx, so browser calls use the same origin:
@@ -54,7 +54,8 @@ If you paste only a compose file into OMV, use `docker-compose.omv.yml`. It pull
 5. Deploy the stack.
 6. Visit `http://<omv-host>:5173`.
 
-If ports `5173` or `8000` are already taken on the OMV host, change `FRONTEND_PORT` or `BACKEND_PORT`.
+If ports `5173` or `8005` are already taken on the OMV host, change `FRONTEND_PORT` or `BACKEND_PORT`.
+The frontend container proxies API requests internally, so the backend does not need to be exposed publicly unless you want direct API access.
 
 To update after a new GitHub commit, pull the latest images and recreate the containers from OMV, or run:
 
@@ -83,6 +84,12 @@ python -m venv .venv
 pip install -r requirements.txt
 cd ..
 uvicorn backend.app:app --reload
+```
+
+Run migrations manually:
+
+```bash
+alembic upgrade head
 ```
 
 ## Local Frontend Development
