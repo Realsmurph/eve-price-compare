@@ -537,7 +537,7 @@ class StaticDataLoader:
 
 
 def _parse_int(value: str | None) -> int | None:
-    if value is None or value == "":
+    if value is None or value.strip().lower() in {"", "none", "null", "\\n"}:
         return None
     return int(value)
 
@@ -549,7 +549,7 @@ def _parse_bool(value: str | None) -> bool:
 
 
 def _parse_decimal(value: str | None) -> str | None:
-    if value is None or value == "":
+    if value is None or value.strip().lower() in {"", "none", "null", "\\n"}:
         return None
     return value
 
