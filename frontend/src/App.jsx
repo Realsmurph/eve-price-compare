@@ -14,6 +14,12 @@ const EMPTY_WATCH_FORM = {
   notes: "",
 };
 
+const THEMES = [
+  { id: "light", label: "Light" },
+  { id: "dark", label: "Dark" },
+  { id: "capsule", label: "Capsule" },
+];
+
 function formatIsk(value) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) {
     return "No orders";
@@ -25,6 +31,7 @@ function formatIsk(value) {
 }
 
 function App() {
+  const [theme, setTheme] = useState(() => localStorage.getItem("eve-ui-theme") ?? "dark");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -46,6 +53,20 @@ function App() {
     () => watchlist.find((item) => item.id === editingId),
     [editingId, watchlist],
   );
+
+  const bestMarket = useMemo(() => {
+    if (!comparison) {
+      return null;
+    }
+
+    const candidates = [
+      { hub: "Jita", sell: comparison.jita.sell },
+      { hub: "Amarr", sell: comparison.amarr.sell },
+      { hub: "CJ", sell: comparison.cj.sell },
+    ].filter((item) => item.sell !== null && item.sell !== undefined);
+
+    return candidates.sort((first, second) => Number(first.sell) - Number(second.sell))[0] ?? null;
+  }, [comparison]);
 
   const visibleWatchlist = useMemo(() => {
     const normalizedFilter = watchFilter.trim().toLowerCase();
@@ -79,6 +100,11 @@ function App() {
       return first.item_name.localeCompare(second.item_name);
     });
   }, [watchFilter, watchSort, watchlist]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("eve-ui-theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     refreshWatchlist();
@@ -127,6 +153,13 @@ function App() {
     setComparison(null);
     setStatus("");
     setError("");
+  }
+
+  function handleQueryChange(event) {
+    setQuery(event.target.value);
+    setSelectedItem(null);
+    setComparison(null);
+    setStatus("");
   }
 
   async function handleCompare() {
@@ -226,16 +259,45 @@ function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div>
+        <div className="brand-block">
           <p className="eyebrow">eve-price-compare</p>
           <h1>Market Desk</h1>
+          <p className="lede">Search, compare, and track New Eden prices from one console.</p>
         </div>
-        <div className="radar" aria-hidden="true">
-          <span />
-          <span />
-          <span />
+        <div className="topbar-actions">
+          <div className="theme-switcher" aria-label="Theme">
+            {THEMES.map((item) => (
+              <button
+                className={theme === item.id ? "active" : ""}
+                key={item.id}
+                type="button"
+                onClick={() => setTheme(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <div className="signal-card" aria-label="Session summary">
+            <span>Watchlist</span>
+            <strong>{watchlist.length}</strong>
+          </div>
         </div>
       </header>
+
+      <section className="status-strip" aria-label="Market summary">
+        <div>
+          <span>Selected</span>
+          <strong>{selectedItem?.name ?? "None"}</strong>
+        </div>
+        <div>
+          <span>Best sell</span>
+          <strong>{bestMarket ? `${bestMarket.hub} ${formatIsk(bestMarket.sell)}` : "Awaiting compare"}</strong>
+        </div>
+        <div>
+          <span>Search matches</span>
+          <strong>{results.length}</strong>
+        </div>
+      </section>
 
       <section className="workspace">
         <div className="left-pane">
@@ -251,7 +313,7 @@ function App() {
                 onClick={handleCompare}
                 disabled={!selectedItem || isComparing}
               >
-                {isComparing ? "Comparing" : "Compare"}
+                <span>{isComparing ? "Comparing" : "Compare"}</span>
               </button>
             </div>
 
@@ -259,7 +321,7 @@ function App() {
               <span>Type name</span>
               <input
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={handleQueryChange}
                 placeholder="Tritanium, PLEX, Rifter"
               />
             </label>
@@ -285,6 +347,9 @@ function App() {
 
             <div className="search-results">
               {isSearching && <p className="muted">Searching...</p>}
+              {!isSearching && !selectedItem && query.trim().length >= 2 && results.length === 0 && (
+                <p className="muted">No matching items yet.</p>
+              )}
               {!isSearching &&
                 results.map((item) => (
                   <button
@@ -383,6 +448,7 @@ function App() {
           </div>
 
           <div className="watchlist">
+            {visibleWatchlist.length === 0 && <p className="muted">No watchlist items match.</p>}
             {visibleWatchlist.map((item) => (
               <article className="watch-item" key={item.id}>
                 <div>
