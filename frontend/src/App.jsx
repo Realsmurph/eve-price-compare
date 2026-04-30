@@ -5,6 +5,7 @@ import {
   createWatchlistItem,
   deleteWatchlistItem,
   getItemHistory,
+  getReactionProfit,
   listWatchlist,
   searchItems,
   updateWatchlistItem,
@@ -47,6 +48,7 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [comparison, setComparison] = useState(null);
   const [history, setHistory] = useState([]);
+  const [reaction, setReaction] = useState(null);
   const [watchlist, setWatchlist] = useState([]);
   const [watchForm, setWatchForm] = useState(EMPTY_WATCH_FORM);
   const [editingId, setEditingId] = useState(null);
@@ -166,6 +168,7 @@ function App() {
     setResults([]);
     setComparison(null);
     setHistory([]);
+    setReaction(null);
     setStatus("");
     setError("");
   }
@@ -175,6 +178,7 @@ function App() {
     setSelectedItem(null);
     setComparison(null);
     setHistory([]);
+    setReaction(null);
     setStatus("");
   }
 
@@ -191,6 +195,11 @@ function App() {
       const data = await compareItem(selectedItem.type_id);
       setComparison(data);
       setHistory(await getItemHistory(selectedItem.type_id, { limit: 18 }));
+      try {
+        setReaction(await getReactionProfit(selectedItem.type_id));
+      } catch {
+        setReaction(null);
+      }
       setStatus(`Compared ${selectedItem.name}`);
     } catch (err) {
       setError(err.message);
@@ -399,6 +408,7 @@ function App() {
           </section>
 
           <MarketTable comparison={comparison} />
+          <ReactionPanel reaction={reaction} />
           <HistoryPanel history={history} />
         </div>
 
@@ -613,6 +623,49 @@ function MarketTable({ comparison }) {
             ))}
           </tbody>
         </table>
+      </div>
+    </section>
+  );
+}
+
+function ReactionPanel({ reaction }) {
+  if (!reaction) {
+    return null;
+  }
+
+  return (
+    <section className="panel reaction-panel" aria-labelledby="reaction-heading">
+      <div className="panel-header">
+        <div>
+          <h2 id="reaction-heading">Reaction Profit</h2>
+          <p>{reaction.shipping_route} via {reaction.shipping_provider}</p>
+        </div>
+      </div>
+      <div className="metric-grid">
+        <div>
+          <span>Input cost</span>
+          <strong>{formatIsk(reaction.input_cost)}</strong>
+        </div>
+        <div>
+          <span>Freight</span>
+          <strong>{formatIsk(reaction.shipping_cost)}</strong>
+        </div>
+        <div>
+          <span>Volume</span>
+          <strong>{formatIsk(reaction.input_volume_m3)} m3</strong>
+        </div>
+        <div>
+          <span>Profit after import</span>
+          <strong>{formatIsk(reaction.profit_after_import)}</strong>
+        </div>
+        <div>
+          <span>ISK/hour after import</span>
+          <strong>{formatIsk(reaction.isk_per_hour_after_import)}</strong>
+        </div>
+        <div>
+          <span>Freight rate</span>
+          <strong>{formatIsk(reaction.shipping_rate_per_m3)} ISK/m3</strong>
+        </div>
       </div>
     </section>
   );

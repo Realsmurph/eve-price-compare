@@ -86,10 +86,20 @@ class ReactionLineItem(BaseModel):
     quantity: int
     unit_price: Decimal
     total: Decimal
+    unit_volume_m3: Decimal | None = None
+    total_volume_m3: Decimal | None = None
+    shipping_cost: Decimal = Decimal("0")
 
-    @field_serializer("unit_price", "total", when_used="json")
+    @field_serializer(
+        "unit_price",
+        "total",
+        "unit_volume_m3",
+        "total_volume_m3",
+        "shipping_cost",
+        when_used="json",
+    )
     def serialize_money(self, value: Decimal) -> float:
-        return float(value)
+        return float(value) if value is not None else None
 
 
 class ReactionProfitRead(BaseModel):
@@ -100,6 +110,11 @@ class ReactionProfitRead(BaseModel):
     output_quantity: int
     duration_seconds: int
     input_cost: Decimal
+    input_volume_m3: Decimal
+    shipping_provider: str
+    shipping_route: str
+    shipping_rate_per_m3: Decimal
+    shipping_cost: Decimal
     import_cost: Decimal
     total_cost: Decimal
     output_value: Decimal
@@ -113,6 +128,9 @@ class ReactionProfitRead(BaseModel):
 
     @field_serializer(
         "input_cost",
+        "input_volume_m3",
+        "shipping_rate_per_m3",
+        "shipping_cost",
         "import_cost",
         "total_cost",
         "output_value",

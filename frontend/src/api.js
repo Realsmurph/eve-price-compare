@@ -54,6 +54,10 @@ export function getItemHistory(typeId, options = {}) {
   return request(`/api/items/${typeId}/history?${params.toString()}`);
 }
 
+export function getReactionProfit(typeId) {
+  return request(`/api/reactions/${typeId}`);
+}
+
 export function listWatchlist() {
   return request("/watchlist");
 }

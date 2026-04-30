@@ -1,4 +1,5 @@
 import os
+from decimal import Decimal
 
 
 def _csv_env(name: str, default: str = "") -> list[str]:
@@ -28,3 +29,10 @@ GOONMETRICS_BASE_URL = os.getenv(
     "https://goonmetrics.apps.goonswarm.org",
 )
 GOONMETRICS_CJ_STRUCTURE_ID = os.getenv("GOONMETRICS_CJ_STRUCTURE_ID", "1049588174021")
+ITL_SHIPPING_PROVIDER = os.getenv(
+    "ITL_SHIPPING_PROVIDER",
+    "Imperial Transcontinental Logistics",
+)
+ITL_SHIPPING_ROUTE = os.getenv("ITL_SHIPPING_ROUTE", "Jita 4-4 -> C-J6MT")
+ITL_SHIPPING_RATE_PER_M3 = Decimal(os.getenv("ITL_SHIPPING_RATE_PER_M3", "800"))
+ITL_SHIPPING_MIN_FEE = Decimal(os.getenv("ITL_SHIPPING_MIN_FEE", "0"))
