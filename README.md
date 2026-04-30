@@ -44,14 +44,18 @@ The frontend proxies API calls through nginx, so browser calls use the same orig
 
 ## OpenMediaVault Compose Plugin
 
+If you paste only a compose file into OMV, use `docker-compose.omv.yml`. It builds directly from GitHub and does not require `backend/` and `frontend/` folders beside the compose file.
+
 1. Create a new Compose file in the OMV Compose plugin.
-2. Paste `docker-compose.yml`.
+2. Paste `docker-compose.omv.yml`.
 3. Add the values from `.env.example` in the plugin's environment section, or upload a `.env` file beside the compose file.
 4. Set `POSTGRES_PASSWORD` to a real password.
 5. Deploy the stack.
 6. Visit `http://<omv-host>:5173`.
 
 If ports `5173` or `8000` are already taken on the OMV host, change `FRONTEND_PORT` or `BACKEND_PORT`.
+
+Use `docker-compose.yml` only when the full repository has been cloned locally and the compose file sits beside the `backend/` and `frontend/` directories.
 
 ## Local Backend Development
 
